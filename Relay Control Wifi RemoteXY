@@ -1,0 +1,108 @@
+// RemoteXY programından rölemizi kontrol edeceğimiz uygulamayı oluşturuyoruz.
+// Wifi ile uygulamaya bağlanabilmek için port oluşturuyoruz.
+// Detaylı anlatımı https://remotexy.com/ sitesinden bakabilirsiniz.
+
+#define REMOTEXY_MODE__ESP8266WIFI_LIB_POINT
+#include <ESP8266WiFi.h>
+#include <SPI.h>
+#include <RemoteXY.h>
+#define REMOTEXY_WIFI_SSID "Ulgerbb"
+#define REMOTEXY_WIFI_PASSWORD "123123123"
+#define REMOTEXY_SERVER_PORT 6377
+#pragma pack(push, 1)
+
+uint8_t RemoteXY_CONF[] =
+{ 255,5,0,22,0,1,1,10,17,0,
+2,1,25,24,25,7,6,8,31,31,
+65,195,167,196,177,107,0,75,97,112,
+97,108,196,177,0,2,1,25,33,25,
+7,6,8,31,31,65,195,167,196,177,
+107,0,75,97,112,97,108,196,177,0,
+2,1,25,42,25,7,6,8,31,31,
+65,195,167,196,177,107,0,75,97,112,
+97,108,196,177,0,2,1,38,9,26,
+8,1,8,31,31,65,195,167,196,177,
+107,0,75,97,112,97,108,196,177,0,
+2,1,25,51,25,7,6,8,31,31,
+65,195,167,196,177,107,0,75,97,112,
+97,108,196,177,0,129,0,4,25,17,
+5,6,80,111,109,112,97,0,129,0,
+7,34,9,5,6,70,97,110,0,129,
+0,3,53,19,5,6,83,196,177,99,
+97,107,108,196,177,107,0,129,0,23,
+2,55,7,1,79,116,111,109,97,116,
+105,107,32,83,105,115,116,101,109,0,
+129,0,7,43,13,5,6,72,97,118,
+97,46,0,67,4,72,24,20,5,1,
+16,11,67,4,72,31,20,5,192,16,
+11,129,0,54,25,15,4,1,83,196,
+177,99,97,107,108,196,177,107,58,0,
+129,0,55,32,9,4,192,78,101,109,
+58,32,37,0 };
+struct {
+uint8_t switch_2; // =1 if switch ON and =0 if OFF
+uint8_t switch_3; // =1 if switch ON and =0 if OFF
+uint8_t switch_4; // =1 if switch ON and =0 if OFF
+uint8_t switch_1; // =1 if switch ON and =0 if OFF
+uint8_t switch_5; // =1 if switch ON and =0 if OFF
+char text_temp[11]; // string UTF8 end zero
+char text_hum[11]; // string UTF8 end zero
+signed char level_temp_down; /* =0..100 level position /
+signed char level_temp_up; / =0..100 level position /
+signed char level_hum; / =0..100 level position /
+uint8_t connect_flag; // =1 if wire connected, else =0
+} RemoteXY;
+#pragma pack(pop)
+#include "DHT.h"
+#define PIN_SWITCH_2 D2
+#define PIN_SWITCH_3 D3
+#define PIN_SWITCH_4 D4
+#define PIN_SWITCH_1 D0
+#define PIN_SWITCH_5 D5
+#define DHTPIN D7
+#define DHTTYPE DHT11
+DHT dht(DHTPIN, DHTTYPE);
+//int Sensor=7;
+int temp;
+int hum;
+void setup() {
+RemoteXY_Init ();
+pinMode (PIN_SWITCH_2, OUTPUT);
+pinMode (PIN_SWITCH_3, OUTPUT);
+pinMode (PIN_SWITCH_4, OUTPUT);
+pinMode (PIN_SWITCH_1, OUTPUT);
+pinMode (PIN_SWITCH_5, OUTPUT);
+Serial.begin(9600);
+dht.begin();
+Serial.print(" "); }
+void loop() {
+RemoteXY_Handler ();
+// int chk=dht.read(Sensor);
+float temp = dht.readTemperature();
+float hum = dht.readHumidity();
+dtostrf(temp, 0, 1, RemoteXY.text_temp);
+dtostrf(hum, 0, 1, RemoteXY.text_hum);
+//Serial.setCursor(0,0);
+Serial.print("Derece:");
+Serial.print(temp);
+Serial.print(" C");
+// delay(1000);
+digitalWrite(PIN_SWITCH_2, (RemoteXY.switch_2==1)?LOW:HIGH);
+digitalWrite(PIN_SWITCH_3, (RemoteXY.switch_3==1)?LOW:HIGH);
+digitalWrite(PIN_SWITCH_4, (RemoteXY.switch_4==1)?LOW:HIGH);
+digitalWrite(PIN_SWITCH_1, (RemoteXY.switch_1==1)?LOW:HIGH);
+digitalWrite(PIN_SWITCH_5, (RemoteXY.switch_5==1)?LOW:HIGH);
+// if (temp<0) {
+// RemoteXY.level_temp_up = 0;
+// RemoteXY.level_temp_down = min (-temp2,100);
+// }
+// else if (temp>0) {
+// RemoteXY.level_temp_up = min(temp*2,100);
+// RemoteXY.level_temp_down = 0;
+// }
+// else {
+// RemoteXY.level_temp_up = 0;
+// RemoteXY.level_temp_down = 0;
+// }
+RemoteXY.level_hum = hum; }
+
